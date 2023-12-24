@@ -114,7 +114,7 @@ export default function NorthMacedoniaMap() {
     const [hoveredFavIndex, setHoveredFavIndex] = useState<number | null>(null);
 
     useEffect(() => {
-        fetch('https://adele-node-mongodb.onrender.com:10000/data')
+        fetch('https://adele-node-mongodb.onrender.com/data')
             .then(res => res.json())
             .then(data => {
                 setMonumentsData({ type: 'FeatureCollection', features: data });

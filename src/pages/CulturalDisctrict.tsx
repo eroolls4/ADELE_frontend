@@ -2,8 +2,6 @@
 
 import leftEndPhoto from '../images/leftEndPhoto.jpg';
 import rightEndPhoto from '../images/rightEndPhoto.jpg';
-import firstStar from '../images/firstStar.png';
-import fullMap from '../images/fullMap.jpg';
 import { useNavigate } from 'react-router-dom';
 
 

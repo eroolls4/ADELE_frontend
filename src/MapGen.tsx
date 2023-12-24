@@ -1,14 +1,51 @@
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import L, { LatLng, Layer   } from 'leaflet';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Header from "./pages/Header.tsx";
 import Footer from "./pages/Footer.tsx";
 import pin from "./images/pin.png";
 import { useLocation } from 'react-router-dom';
+import { Feature, Point } from 'geojson';
+import { CSSProperties } from 'react';
+
+import { FeatureCollection } from 'geojson';
+
+interface MonumentData extends FeatureCollection<Point, MyGeoJSONProperties> {}
+
+interface MyGeoJSONProperties {
+    name: string;
+    // add other properties as needed
+}
+
+
+
+interface MonumentData {
+    type: "FeatureCollection";
+}
+
+interface Favorite {
+    place: Feature<Point, MyGeoJSONProperties>;
+    review: string;
+}
+
+declare global {
+    interface Window {
+        addToFavoritesFromPopup: (name: string) => void;
+    }
+}
+
+interface ReviewModalProps {
+    // ... other properties
+    onSubmit: (favIndex: number) => void; // favIndex is always a number
+}
+
+
+
+
 
 
 
@@ -19,23 +56,32 @@ const styles = {
         padding: '10px',
         borderRadius: '5px',
         marginBottom: '5px',
-        position: 'relative',
+        position: 'relative' as const,
         cursor: 'pointer'
-    },
+    } as CSSProperties,
     reviewButton: {
-        position: 'absolute',
+        position: 'absolute' as const,
         right: '10px',
         top: '50%',
         transform: 'translateY(-50%)'
-    },
+    }as CSSProperties,
     favoriteItemHover: {
         display: 'block'
-    }
+    } as CSSProperties
 };
 
+interface ReviewModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSubmit: (favIndex: number) => void; // Accepts only number
+    reviewText: string;
+    setReviewText: (text: string) => void;
+    favIndex: number | null;
+}
 
-function ReviewModal({ isOpen, onClose, onSubmit, reviewText, setReviewText, favIndex }) {
-    let textareaStyle = {
+
+function ReviewModal({ isOpen, onClose, onSubmit, reviewText, setReviewText, favIndex }: ReviewModalProps) {
+    const textareaStyle = {
         width: '100%',
         height: '100px',
         marginBottom: '10px'
@@ -50,21 +96,22 @@ function ReviewModal({ isOpen, onClose, onSubmit, reviewText, setReviewText, fav
                 value={reviewText}
                 onChange={(e) => setReviewText(e.target.value)}
             ></textarea>
-            <button onClick={() => onSubmit(favIndex)}>Submit Review</button>
+            <button onClick={() => favIndex !== null && onSubmit(favIndex)}>Submit Review</button>
             <button onClick={onClose}>Close</button>
         </div>
     );
 }
 
 export default function NorthMacedoniaMap() {
-    const [monumentsData, setMonumentsData] = useState({ features: [] });
+    const [monumentsData, setMonumentsData] = useState<MonumentData>({ type: "FeatureCollection", features: [] });
     const [filter, setFilter] = useState('');
-    const [filteredData, setFilteredData] = useState({ features: [] });
-    const [favorites, setFavorites] = useState([]);
+    const [filteredData, setFilteredData] = useState<MonumentData>({ type: "FeatureCollection", features: [] });
+    const [favorites, setFavorites] = useState<Favorite[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentFavIndex, setCurrentFavIndex] = useState(null);
+    const [currentFavIndex, setCurrentFavIndex] = useState<number | null>(null);
+
     const [currentReviewText, setCurrentReviewText] = useState('');
-    const [hoveredFavIndex, setHoveredFavIndex] = useState(null);
+    const [hoveredFavIndex, setHoveredFavIndex] = useState<number | null>(null);
 
     useEffect(() => {
         fetch('http://localhost:4000/data')
@@ -87,22 +134,30 @@ export default function NorthMacedoniaMap() {
         }
     }, [userEmail]);
 
-    // User profile card state
-    const [showProfileCard, setShowProfileCard] = useState(false);
 
 
 
     useEffect(() => {
         favorites.forEach((_, index) => {
             const listItem = document.querySelector(`li:nth-child(${index + 1})`);
-            listItem.addEventListener('mouseenter', () => {
-                document.querySelector(`.review-button-${index}`).style.display = 'block';
-            });
-            listItem.addEventListener('mouseleave', () => {
-                document.querySelector(`.review-button-${index}`).style.display = 'none';
-            });
+            if (listItem instanceof HTMLElement) {
+                listItem.addEventListener('mouseenter', () => {
+                    const reviewButton = document.querySelector(`.review-button-${index}`);
+                    if (reviewButton instanceof HTMLElement) {
+                        reviewButton.style.display = 'block';
+                    }
+                });
+                listItem.addEventListener('mouseleave', () => {
+                    const reviewButton = document.querySelector(`.review-button-${index}`);
+                    if (reviewButton instanceof HTMLElement) {
+                        reviewButton.style.display = 'none';
+                    }
+                });
+            }
         });
     }, [favorites]);
+
+
 
 
 
@@ -116,7 +171,7 @@ export default function NorthMacedoniaMap() {
     }, [filter, monumentsData]);
 
 
-    const addToFavorites = (name) => {
+    const addToFavorites = (name : string) => {
         const monument = monumentsData.features.find(f => f.properties.name === name);
         if (monument && !favorites.some(fav => fav.place.properties.name === name)) {
             setFavorites(prevFavorites => [...prevFavorites, { place: monument, review: "" }]);
@@ -128,7 +183,7 @@ export default function NorthMacedoniaMap() {
 
     window.addToFavoritesFromPopup = addToFavorites;
 
-    const openReviewModal = (index) => {
+    const openReviewModal = (index : number) => {
         setCurrentFavIndex(index);
         setCurrentReviewText(favorites[index].review || '');
         setIsModalOpen(true);
@@ -139,7 +194,7 @@ export default function NorthMacedoniaMap() {
         setCurrentReviewText('');
     };
 
-    const submitReview = (favIndex) => {
+    const submitReview = (favIndex : number) => {
         setFavorites(prev => prev.map((fav, index) => index === favIndex ? { ...fav, review: currentReviewText } : fav));
         setIsModalOpen(false);
         setCurrentReviewText('');
@@ -152,22 +207,30 @@ export default function NorthMacedoniaMap() {
         popupAnchor: [1, -34]
     });
 
-    const northMacedoniaBounds = [[40.853659, 20.452902], [42.373535, 23.034051]];
-
-    const onEachMonument = (feature, latlng) => {
+    const northMacedoniaBounds = new L.LatLngBounds(
+        new L.LatLng(40.853659, 20.452902),
+        new L.LatLng(42.373535, 23.034051)
+    )
+    const onEachMonument = (
+        feature: Feature<Point, MyGeoJSONProperties>,
+        latlng: LatLng
+    ): Layer => {
         if (feature.geometry && feature.geometry.type === "Point") {
             const marker = L.marker(latlng, { icon: customIcon });
             if (feature.properties && feature.properties.name) {
                 marker.bindPopup(`
-                    <div>
-                        <h3>${feature.properties.name}</h3>
-                        <button onclick="window.addToFavoritesFromPopup('${feature.properties.name}')">Add to Favorites</button>
-                    </div>
-                `);
+        <div>
+          <h3>${feature.properties.name}</h3>
+          <button onclick="window.addToFavoritesFromPopup('${feature.properties.name}')">Add to Favorites</button>
+        </div>
+      `);
             }
             return marker;
         }
+        // Handle other geometry types or return a default layer
+        return L.layerGroup();
     };
+
 
     return (
         <div className="flex flex-col h-screen">
@@ -232,157 +295,4 @@ export default function NorthMacedoniaMap() {
         </div>
     );
 }
-
-
-// import React, { useState, useEffect } from 'react';
-// import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
-// import 'leaflet/dist/leaflet.css';
-// import L from 'leaflet';
-// import Header from "./pages/Header.tsx";
-// import Footer from "./pages/Footer.tsx";
-// import pin from "./images/pin.png";
-// import {toast, ToastContainer} from "react-toastify";
-//
-// export default function NorthMacedoniaMap() {
-//     const [monumentsData, setMonumentsData] = useState({ features: [] });
-//     const [filter, setFilter] = useState('');
-//     const [filteredData, setFilteredData] = useState({ features: [] });
-//     const [favorites, setFavorites] = useState([]);
-//
-//     useEffect(() => {
-//         fetch('http://localhost:4000/data')
-//             .then(res => res.json())
-//             .then(data => {
-//                 const featureCollection = {
-//                     type: 'FeatureCollection',
-//                     features: data
-//                 };
-//                 setMonumentsData(featureCollection);
-//                 setFilteredData(featureCollection);
-//             })
-//             .catch(error => console.error('Error fetching data:', error));
-//
-//     }, []);
-//
-//
-//     useEffect(() => {
-//         console.log(favorites);
-//     },[favorites])
-//
-//     useEffect(() => {
-//         if (monumentsData && monumentsData.features) {
-//             const filteredFeatures = monumentsData.features.filter((feature) =>
-//                 JSON.stringify(feature.properties).toLowerCase().includes(filter.toLowerCase())
-//             );
-//             setFilteredData({ ...monumentsData, features: filteredFeatures });
-//         }
-//     }, [filter, monumentsData]);
-//
-//     const customIcon = new L.Icon({
-//         iconUrl: pin,
-//         iconSize: [25, 41],
-//         iconAnchor: [12, 41],
-//         popupAnchor: [1, -34]
-//     });
-//
-//     const northMacedoniaBounds = [
-//         [40.853659, 20.452902],
-//         [42.373535, 23.034051]
-//     ];
-//
-//     const onEachMonument = (feature : any, latlng : any) => {
-//         if (feature.geometry && feature.geometry.type === "Point") {
-//             const marker = L.marker(latlng, { icon: customIcon });
-//
-//             if (feature.properties && feature.properties.name) {
-//                 marker.bindPopup(`
-//                     <div>
-//                         <h3>${feature.properties.name}</h3>
-//                         <button onclick="window.addToFavoritesFromPopup('${feature.properties.name}')">Add to Favorites</button>
-//                     </div>
-//                 `);
-//             }
-//
-//             return marker;
-//         }
-//     };
-//
-//     window.addToFavoritesFromPopup = (name) => {
-//         const monument = monumentsData.features.find(f => f.properties.name === name);
-//         if (monument && !favorites.some(fav => fav.properties.name === name)) {
-//             setFavorites(prevFavorites => [...prevFavorites, monument]);
-//             toast(`${monument.properties.name} added to favorites!`);
-//         }else{
-//             toast(`${monument.properties.name} is already  added to favorites!`);
-//         }
-//     };
-//
-//     return (
-//         <div className="flex flex-col h-screen">
-//             <Header />
-//             <ToastContainer position="bottom-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-//             <div className="bg-white shadow p-4 mt-20">
-//                 <div className="max-w-3xl mx-auto flex">
-//                     <input
-//                         className="flex-grow p-2 border border-gray-300 rounded-l-md focus:outline-none"
-//                         type="text"
-//                         placeholder="Search by name..."
-//                         value={filter}
-//                         onChange={(e) => setFilter(e.target.value)}
-//                     />
-//                     <button
-//                         className="bg-blue-500 text-white p-2 rounded-r-md hover:bg-blue-600 focus:outline-none"
-//                         // onClick={() => {
-//                         //     const mD = monumentsData;
-//                         //     if (mD && mD.features) {
-//                         //         const filteredFeatures = mD.features.filter((feature) =>
-//                         //             feature.properties.name.toLowerCase().includes(filter.toLowerCase())
-//                         //         );
-//                         //         setFilteredData({ ...mD, features: filteredFeatures });
-//                         //     }
-//                         // }}
-//                     >
-//                         Search
-//                     </button>
-//                 </div>
-//                 {filteredData && (
-//                     <h1 className="text-center my-4">Total {filteredData.features.length > 0 ? filteredData.features.length - 1   : 0} results found</h1>
-//                 )}
-//
-//                 <div className="favorites-list">
-//                     <h2>Favorites</h2>
-//                     <ul className="flex flex-col p-2 mt-1">
-//                         {favorites.map((fav, index) => (
-//                             <li className="bg-blue-300 text-white p-2 rounded-r-md hover:bg-blue-500 focus:outline-none" key={index}>{index + 1}. {fav.properties.name}</li>
-//                         ))}
-//                     </ul>
-//                 </div>
-//             </div>
-//
-//             <div className="grow">
-//                 <MapContainer
-//                     center={[41.6086, 21.7453]}
-//                     zoom={7}
-//                     className="w-full h-full"
-//                     maxBounds={northMacedoniaBounds}
-//                     minZoom={7}
-//                 >
-//                     <TileLayer
-//                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-//                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-//                     />
-//                     <GeoJSON
-//                         key={filteredData.features.length}
-//                         data={filteredData}
-//                         pointToLayer={onEachMonument}
-//                     />
-//                 </MapContainer>
-//             </div>
-//
-//             <Footer />
-//         </div>
-//     );
-// }
-
-
 

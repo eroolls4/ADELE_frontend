@@ -71,12 +71,12 @@
 // export default Header;
 
 
-import {useLocation, useNavigate} from 'react-router-dom';
+import { useNavigate} from 'react-router-dom';
 import { useCookies } from "react-cookie";
 
 function Header() {
     const navigate = useNavigate();
-    const [cookies, setCookie, removeCookie] = useCookies(['jwt']);
+    const [cookies, removeCookie] = useCookies(['jwt']);
 
     const handleLoginClick = () => {
         navigate('/login');
@@ -93,8 +93,7 @@ function Header() {
         navigate('/login');
     };
 
-    const location = useLocation();
-    const userEmail = location.state?.email;
+
 
     return (
         <nav>

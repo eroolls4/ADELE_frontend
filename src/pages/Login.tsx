@@ -15,7 +15,7 @@ function Login() {
 
     useEffect(() => {
         if (cookies.jwt) {
-            axios.get('http://localhost:4000/auth/user', { withCredentials: true })
+            axios.get('https://adele-node-mongodb.onrender.com/auth/user', { withCredentials: true })
                 .then(response => {
                     if (response.data.status) {
                         toast.success(`Welcome, ${response.data.user.email}`, {
@@ -40,7 +40,7 @@ function Login() {
         event.preventDefault();
         try {
             const { data } = await axios.post(
-                "http://localhost:4000/auth/login",
+                "https://adele-node-mongodb.onrender.com/auth/login",
                 {
                     ...values,
                 },

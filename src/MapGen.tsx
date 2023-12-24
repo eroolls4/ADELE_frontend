@@ -247,12 +247,12 @@ export default function NorthMacedoniaMap() {
                     />
                     <button
                         className="bg-blue-500 text-white p-2 rounded-r-md hover:bg-blue-600 focus:outline-none"
-                        onClick={() => {
-                            const filteredFeatures = monumentsData.features.filter((feature) =>
-                                feature.properties.name.toLowerCase().includes(filter.toLowerCase())
-                            );
-                            setFilteredData({ ...monumentsData, features: filteredFeatures });
-                        }}
+                        // onClick={() => {
+                        //     const filteredFeatures = monumentsData.features.filter((feature) =>
+                        //         feature.properties.name.toLowerCase().includes(filter.toLowerCase())
+                        //     );
+                        //     setFilteredData({ ...monumentsData, features: filteredFeatures });
+                        // }}
                     >
                         Search
                     </button>

@@ -43,7 +43,7 @@ function MainContent() {
                             <input className="inputContactUs" type="text" placeholder="Subject" name="subject" required />
                             <textarea className="inputContactUs" cols={59} rows={7} placeholder="Message" name="body" required></textarea>
                             <div id="sumbitMail">
-                                <button ref="#contactUs" id="submit">SUBMIT</button>
+                                <button  id="submit">SUBMIT</button>
                             </div>
                         </form>
                     </div>

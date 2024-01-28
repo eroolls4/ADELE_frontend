@@ -15,6 +15,7 @@ function Login() {
 
     useEffect(() => {
         if (cookies.jwt) {
+             // for depl axios.get('https://adele-node-mongodb.onrender.com/auth/user', { withCredentials: true })
             axios.get('https://adele-node-mongodb.onrender.com/auth/user', { withCredentials: true })
                 .then(response => {
                     if (response.data.status) {
@@ -40,6 +41,7 @@ function Login() {
         event.preventDefault();
         try {
             const { data } = await axios.post(
+                // for depl "https://adele-node-mongodb.onrender.com/auth/login",
                 "https://adele-node-mongodb.onrender.com/auth/login",
                 {
                     ...values,
@@ -56,6 +58,14 @@ function Login() {
                     toast.success(`Hello, ${values.email}`, {
                         position: "bottom-right",
                     });
+
+
+                    const sessionId = Math.random().toString(36).substring(2, 15);
+
+                    // Store the session ID and user's email in local storage
+                    localStorage.setItem('sessionId', sessionId);
+                    localStorage.setItem('userEmail', values.email);
+
                     navigate('/mapgen', { state: { email: values.email } });
                 }
             }

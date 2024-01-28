@@ -13,6 +13,7 @@ i18n
     .use(Backend)
     .use({
         ...languageDetector,
+
     } as LanguageDetectorType)
     .use(initReactI18next)
     .init({

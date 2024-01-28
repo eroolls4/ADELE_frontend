@@ -12,7 +12,6 @@ import mkTranslations from '../../public/locales/mk/mk.json';
 i18n
     .use(Backend)
     .use({
-        type: 'languageDetector',
         ...languageDetector,
     } as LanguageDetectorType)
     .use(initReactI18next)
